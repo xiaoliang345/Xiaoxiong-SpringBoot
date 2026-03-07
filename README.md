@@ -7,6 +7,7 @@
 - **持久层**: MyBatis-Plus
 - **数据库**: MySQL5.7/8.0
 - **缓存**: Redis
+- **认证与权限**: Sa-Token（基于 Token 的登录态、角色/权限控制）
 - **对象存储**: 腾讯云 COS
 - **接口文档**: Knife4j (基于 OpenAPI/Swagger)
 
@@ -37,6 +38,16 @@ cos:
     secretKey: 你的SecretKey
     region: ap-guangzhou        # 替换为你实际的存储桶所属地域
     bucket: your-bucket-name    # 替换为你实际的存储桶名称（形如 xxx-123456789）
+
+langchain4j:
+  open-ai:
+    chat-model:
+      base-url:  # 请替换为实际的base-url
+      api-key:   # 请替换为实际的API密钥
+      model-name:  # 请替换为实际的模型名称
+      log-requests: true
+      log-responses: true
+      max-tokens: 8192
 ```
 
 > 注意：请根据自己的本地环境修改用户名、密码、COS 凭证以及其它连接信息。
@@ -66,7 +77,7 @@ com.oxn.xiaoxiong
 ├─ XiaoxiongApplication.java         // 应用启动类，入口 main 方法
 ├─ controller                        // 对外接口层（Controller）
 │  ├─ MainController.java           // 根路径健康检查接口，返回 "ok"
-│  ├─ UserController.java           // 用户列表测试接口，演示分页 + Redis 缓存
+│  ├─ UserController.java           // 用户相关接口，演示分页 + Redis 缓存 + Sa-Token 登录与角色校验
 │  └─ FileController.java           // 文件上传 / 下载接口，基于腾讯云 COS
 ├─ service                           // 业务层（Service）
 │  ├─ SysUserService.java           // 系统用户业务接口，继承 MyBatis-Plus IService
@@ -82,11 +93,19 @@ com.oxn.xiaoxiong
 │  ├─ PageRequest.java              // 通用分页请求参数
 │  └─ ResultUtils.java              // 快速构造成功 / 失败响应工具
 ├─ enums                             // 枚举类
-│  └─ StatusCode.java               // 统一状态码枚举
+│  ├─ StatusCode.java               // 统一状态码枚举
+│  └─ SysRoleEnum.java              // 系统用户角色枚举（user / admin / super-admin）
 ├─ exception                         // 统一异常处理
 │  ├─ BusinessException.java        // 业务异常定义
-│  ├─ GlobalExceptionHandler.java   // 全局异常捕获与返回封装
+│  ├─ GlobalExceptionHandler.java   // 全局异常捕获与返回封装，含 Sa-Token 登录/权限异常适配
 │  └─ ThrowUtils.java               // 条件抛出业务异常的工具
+├─ sa                               // Sa-Token 相关封装
+│  ├─ StpKit.java                   // StpLogic 门面类，集中管理账号体系（SYS_ROLE）
+│  ├─ StpInterfaceImpl.java         // 自定义权限加载实现，根据 SysUser + SysRoleEnum 返回角色/权限
+│  ├─ annotation
+│  │  └─ SaUserCheckRole.java       // 用户端角色校验注解（支持 AND/OR 多角色模式）
+│  └─ aspect
+│     └─ SaUserAuthAspect.java      // 用户端权限切面，基于 SaUserCheckRole 做登录 + 角色拦截
 ├─ config                            // 配置类
 │  ├─ CorsConfig.java               // 全局 CORS 跨域配置
 │  └─ TencentCOSConfig.java         // 腾讯云 COS 客户端与传输管理器配置
@@ -106,3 +125,18 @@ com.oxn.xiaoxiong
 - 请勿将生产环境的敏感配置（数据库账号密码、第三方密钥等）写入仓库。
 - 如需新增环境（如 `prod`、`test`），建议使用独立的配置文件并通过环境变量或配置中心管理敏感信息。
 
+## 认证与权限（Sa-Token）说明
+
+- **依赖引入**（已在 `pom.xml` 中配置）：
+  - `sa-token-spring-boot3-starter`：核心登录、会话、权限控制能力
+  - `sa-token-redis-template`：基于 Redis 持久化登录会话等数据
+- **账号体系**：
+  - 使用 `StpKit.SYS_ROLE` 代表系统用户账号体系（`loginType = "user"`）
+  - 登录示例：`POST /api/user/login?username=xxx&password=xxx`，登录成功后会在响应头/Cookie 中携带 Token
+- **角色与权限**：
+  - 通过 `SysRoleEnum` 维护 `user / admin / super-admin` 三种角色，并在 `StpInterfaceImpl` 中实现角色继承和权限列表组装
+  - 提供 `@SaUserCheckRole` 注解 + `SaUserAuthAspect` 切面，实现方法级角色拦截（支持 AND/OR 多角色模式）
+  - 示例接口（见 `UserController`）：
+    - `GET /api/user/role/user`：仅普通用户及以上可访问
+    - `GET /api/user/role/admin`：仅管理员及以上可访问
+    - `GET /api/user/role/super-admin`：仅超级管理员可访问
