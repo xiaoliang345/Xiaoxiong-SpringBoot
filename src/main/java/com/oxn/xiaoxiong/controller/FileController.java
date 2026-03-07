@@ -5,7 +5,6 @@ import com.oxn.xiaoxiong.common.ResultUtils;
 import com.oxn.xiaoxiong.enums.StatusCode;
 import com.oxn.xiaoxiong.exception.ThrowUtils;
 import com.oxn.xiaoxiong.util.TencentCOSUtil;
-import com.qcloud.cos.model.UploadResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
