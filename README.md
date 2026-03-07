@@ -3,16 +3,17 @@
 `xiaoxiong` 是一个基于 **Spring Boot** 的后端脚手架项目，集成了常用的基础能力，适合作为后端服务的起步模板进行二次开发。
 
 ### 技术栈
-- **后端框架**: Spring Boot
+- **后端框架**: Spring Boot3.2.3
 - **持久层**: MyBatis-Plus
-- **数据库**: MySQL
+- **数据库**: MySQL5.7/8.0
 - **缓存**: Redis
+- **对象存储**: 腾讯云 COS
 - **接口文档**: Knife4j (基于 OpenAPI/Swagger)
 
 ## 本地开发与启动
 
 ### 环境准备
-- 安装 JDK 8+（推荐 JDK 17 及以上）
+- 安装 JDK 17
 - 安装并启动 MySQL，创建名为 `xiaoxiong` 的数据库
 - 安装并启动 Redis
 - 安装 Maven（如使用 IDEA 内置 Maven 可不单独安装）
@@ -29,9 +30,18 @@
 db:
   username: root
   password: 123456
+
+cos:
+  client:
+    secretId: 你的SecretId
+    secretKey: 你的SecretKey
+    region: ap-guangzhou        # 替换为你实际的存储桶所属地域
+    bucket: your-bucket-name    # 替换为你实际的存储桶名称（形如 xxx-123456789）
 ```
 
-> 注意：请根据自己的本地环境修改用户名、密码以及其它连接信息。
+> 注意：请根据自己的本地环境修改用户名、密码、COS 凭证以及其它连接信息。
+>
+> 以上 `cos.client.*` 配置会通过 `application.yml` 中的占位符注入到 `tencent.cos.*`，由 `TencentCOSConfig` 创建 COS 客户端并供业务使用。
 
 ### 启动项目
 
@@ -56,7 +66,8 @@ com.oxn.xiaoxiong
 ├─ XiaoxiongApplication.java         // 应用启动类，入口 main 方法
 ├─ controller                        // 对外接口层（Controller）
 │  ├─ MainController.java           // 根路径健康检查接口，返回 "ok"
-│  └─ UserController.java           // 用户列表测试接口，演示分页 + Redis 缓存
+│  ├─ UserController.java           // 用户列表测试接口，演示分页 + Redis 缓存
+│  └─ FileController.java           // 文件上传 / 下载接口，基于腾讯云 COS
 ├─ service                           // 业务层（Service）
 │  ├─ SysUserService.java           // 系统用户业务接口，继承 MyBatis-Plus IService
 │  └─ impl
@@ -77,9 +88,11 @@ com.oxn.xiaoxiong
 │  ├─ GlobalExceptionHandler.java   // 全局异常捕获与返回封装
 │  └─ ThrowUtils.java               // 条件抛出业务异常的工具
 ├─ config                            // 配置类
-│  └─ CorsConfig.java               // 全局 CORS 跨域配置
+│  ├─ CorsConfig.java               // 全局 CORS 跨域配置
+│  └─ TencentCOSConfig.java         // 腾讯云 COS 客户端与传输管理器配置
 └─ util                              // 工具类
-   └─ RedisUtil.java                // Redis 操作工具（基于 Hutool JSON）
+   ├─ RedisUtil.java                // Redis 操作工具（基于 Hutool JSON）
+   └─ TencentCOSUtil.java           // 腾讯云 COS 上传 / 下载工具
 ```
 
 ### 其它目录和文件（概览）
