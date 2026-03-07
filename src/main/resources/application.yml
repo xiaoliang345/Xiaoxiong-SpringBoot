@@ -20,7 +20,7 @@ spring:
     multipart:
       max-file-size: 200MB
       max-request-size: 200MB
-      
+
   #允许跨域的地址
   cors:
     allowed-origin-patterns:
@@ -59,3 +59,9 @@ tencent:
     secret-key: ${cos.client.secretKey}
     region: ${cos.client.region}
     bucket-name: ${cos.client.bucket}
+
+sa-token:
+  # token 名称（同时也是 cookie 名称）
+  token-name: xiaoxiong-token
+  # token 有效期（单位：秒），-1 代表永久有效
+  timeout: 3600
