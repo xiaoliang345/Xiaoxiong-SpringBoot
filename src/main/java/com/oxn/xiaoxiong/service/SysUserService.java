@@ -1,13 +1,14 @@
 package com.oxn.xiaoxiong.service;
 
-import com.oxn.xiaoxiong.domain.SysUser;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.oxn.xiaoxiong.domain.SysUser;
 
 /**
-* @author 34576
-* @description 针对表【sys_user(系统用户)】的数据库操作Service
-* @createDate 2026-03-06 20:15:46
-*/
+ * 系统用户 Service
+ * 说明：
+ * - 继承 MyBatis-Plus 的 IService，提供通用的 CRUD、分页 等方法
+ * - 业务上如果有自定义方法，可在此接口中继续追加
+ */
 public interface SysUserService extends IService<SysUser> {
 
 }

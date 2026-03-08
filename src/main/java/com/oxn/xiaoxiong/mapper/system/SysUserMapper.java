@@ -1,4 +1,4 @@
-package com.oxn.xiaoxiong.mapper;
+package com.oxn.xiaoxiong.mapper.system;
 
 import com.oxn.xiaoxiong.domain.SysUser;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
